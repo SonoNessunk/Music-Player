@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:music_player/themes/theme_provider.dart';
+import 'package:prova_pala/themes/theme_provider.dart';
 import 'package:provider/provider.dart';
 
 class NeuBox extends StatelessWidget {

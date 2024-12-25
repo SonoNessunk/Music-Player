@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:music_player/themes/dark_mode.dart';
-import 'package:music_player/themes/light_mode.dart';
+import 'package:prova_pala/themes/dark_mode.dart';
+import 'package:prova_pala/themes/light_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider extends ChangeNotifier {

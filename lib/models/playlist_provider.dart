@@ -1,5 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
-import 'package:music_player/models/song.dart';
+import 'package:prova_pala/models/song.dart';
 import 'package:flutter/material.dart';
 
 class PlaylistProvider extends ChangeNotifier{

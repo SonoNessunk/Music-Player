@@ -1,4 +1,4 @@
-import 'package:music_player/pages/settings_page.dart';
+import 'package:prova_pala/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 
 class MyDrawer extends StatelessWidget {
