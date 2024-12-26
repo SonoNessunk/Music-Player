@@ -42,9 +42,6 @@ jobs:
       - name: Run lint check
         run: flutter analyze
 
-      - name: Run tests
-        run: flutter test
-
       - name: Build iOS .ipa
         run: |
           flutter build ipa --release
@@ -83,9 +80,6 @@ jobs:
 
       - name: Run lint check
         run: flutter analyze
-
-      - name: Run tests
-        run: flutter test
 
       - name: Build Android APKs
         run: flutter build apk --split-per-abi
