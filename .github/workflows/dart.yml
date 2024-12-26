@@ -43,9 +43,6 @@ jobs:
   build-android:
     name: 📱 Android Build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        architecture: [android-arm, android-arm64, android-x64]
     steps:
       - uses: actions/checkout@v3
 
@@ -61,20 +58,38 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Update versionCode for ${{ matrix.architecture }}
-        run: |
-          sed -i "s/versionCode [0-9]\+/versionCode $((RANDOM + 1))/g" android/app/build.gradle
+      - name: Build APKs (split per ABI)
+        run: flutter build apk --release --split-per-abi
 
-      - name: Build APK for ${{ matrix.architecture }}
+      - name: Rename and organize APK files
         run: |
-          flutter build apk --release --target-platform=${{ matrix.architecture }}
-          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-release-${{ matrix.architecture }}.apk
+          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/app-release-armeabi-v7a.apk
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/app-release-arm64-v8a.apk
+          mv build/app/outputs/flutter-apk/app-x86_64-release.apk build/app/outputs/flutter-apk/app-release-x86_64.apk
 
-      - name: Upload APK for ${{ matrix.architecture }}
+      - name: Upload APK for armeabi-v7a
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/app/outputs/flutter-apk/app-release-${{ matrix.architecture }}.apk
+          file: build/app/outputs/flutter-apk/app-release-armeabi-v7a.apk
           tag: v1.0
           overwrite: true
-          body: "This is the Android release for ${{ matrix.architecture }}"
+          body: "This is the Android release for armeabi-v7a"
+
+      - name: Upload APK for arm64-v8a
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/app/outputs/flutter-apk/app-release-arm64-v8a.apk
+          tag: v1.0
+          overwrite: true
+          body: "This is the Android release for arm64-v8a"
+
+      - name: Upload APK for x86_64
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/app/outputs/flutter-apk/app-release-x86_64.apk
+          tag: v1.0
+          overwrite: true
+          body: "This is the Android release for x86_64"
