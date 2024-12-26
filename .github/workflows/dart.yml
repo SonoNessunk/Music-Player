@@ -9,7 +9,7 @@ on:
       - main
 
 env:
-  FLUTTER_VERSION: "3.7.0"  # Imposta la versione di Flutter
+  FLUTTER_VERSION: "3.27.1"
 
 jobs:
   build-ios:
