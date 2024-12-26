@@ -7,25 +7,19 @@ class PlaylistProvider extends ChangeNotifier{
 	final List<Song> _playlist = [
 
 		Song(
-			songName: "So Sick",
+			songName: "NEW",
 			artistName: "SonoNessunk",
 			albumArtImagePath: "assets/images/album_artwork_1.png",
 			audioPath: "audio/song_1.mp3",
 		),
 
 		Song(
-			songName: "So Sick 2",
+			songName: "OLD",
 			artistName: "SonoNessunk 2",
 			albumArtImagePath: "assets/images/album_artwork_1.png",
-			audioPath: "audio/song_1.mp3",
+			audioPath: "audio/song_1-old.mp3",
 		),
 
-		Song(
-			songName: "So Sick 3",
-			artistName: "SonoNessunk 3",
-			albumArtImagePath: "assets/images/album_artwork_1.png",
-			audioPath: "audio/song_1.mp3",
-		),
 	];
 
 	int? _currentSongIndex;

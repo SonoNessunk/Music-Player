@@ -37,7 +37,7 @@ class _HomePageState extends State<HomePage> {
 		return Scaffold(
 			backgroundColor: Theme.of(context).colorScheme.surface,
 			appBar: AppBar(
-					title: const Text("P L A Y L I S T"),
+					title: const Text("SD cazz"),
 				),
 			drawer: const MyDrawer(),
 			body: Consumer<PlaylistProvider>(
