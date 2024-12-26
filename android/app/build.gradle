@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.nessunk.musicplayer"
+    namespace = "com.example.prova_pala"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
