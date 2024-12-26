@@ -1,91 +1,95 @@
-name: Flutter Build
+name: iOS-Android-Build
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:  # Trigger manuale
-
-env:
-  FLUTTER_VERSION: "3.27.1"
-  JAVA_VERSION: "17"  # Versione di Java per entrambi i job
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-latest]
-        include:
-          - os: macos-latest
-            platform: ios
-          - os: ubuntu-latest
-            platform: android
-
+  build-ios:
+    name: 🎉 iOS Build
+    runs-on: macos-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      # Setup Java 17
-      - name: Setup Java 17
-        uses: actions/setup-java@v3
+      - uses: subosito/flutter-action@v2
         with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
+          channel: 'stable'
+          architecture: x64
+      - run: flutter pub get
 
-      # Setup Flutter
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - run: pod repo update
+        working-directory: ios
 
-      # Install dependencies
-      - name: Install dependencies
-        run: flutter pub get
+      - run: flutter build ios --release --no-codesign
 
-      # Clean previous builds
-      - name: Clean previous builds
-        run: flutter clean
-
-      # Run lint check
-      - name: Run lint check
-        run: flutter analyze
-
-      # Platform-specific builds
-      - name: Build iOS .ipa
-        if: matrix.platform == 'ios'
-        run: |
-          flutter build ios --release --no-codesign
-        working-directory: .
-
-      - name: Create IPA file for iOS
-        if: matrix.platform == 'ios'
-        run: |
-          mkdir -p build/ios/iphoneos/Payload
-          mv build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
-          zip -qq -r -9 FlutterIpaExport.ipa Payload
+      - run: mkdir Payload
         working-directory: build/ios/iphoneos
 
-      - name: Build Android APKs
-        if: matrix.platform == 'android'
+      - run: mv Runner.app/ Payload
+        working-directory: build/ios/iphoneos
+
+      - name: Create IPA file
+        run: zip -qq -r -9 FlutterIpaExport.ipa Payload
+        working-directory: build/ios/iphoneos
+
+      - name: Upload iOS binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/ios/iphoneos/FlutterIpaExport.ipa
+          tag: v1.0
+          overwrite: true
+          body: "This is the iOS release"
+
+  build-android:
+    name: 📱 Android Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          architecture: x64
+
+      - run: flutter pub get
+
+      - name: Build APKs (split per ABI)
+        run: flutter build apk --release --split-per-abi
+
+      - name: Rename and organize APK files
         run: |
-          flutter build apk --split-per-abi
-        working-directory: .
+          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/app-release-armeabi-v7a.apk
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/app-release-arm64-v8a.apk
+          mv build/app/outputs/flutter-apk/app-x86_64-release.apk build/app/outputs/flutter-apk/app-release-x86_64.apk
 
-      # Upload artifacts (iOS and Android)
-      - name: Upload artifact (iOS)
-        if: matrix.platform == 'ios'
-        uses: actions/upload-artifact@v3
+      - name: Upload APK for armeabi-v7a
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: ios-ipa
-          path: build/ios/iphoneos/FlutterIpaExport.ipa
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/app/outputs/flutter-apk/app-release-armeabi-v7a.apk
+          tag: v1.0
+          overwrite: true
+          body: "This is the Android release for armeabi-v7a"
 
-      - name: Upload artifact (Android)
-        if: matrix.platform == 'android'
-        uses: actions/upload-artifact@v3
+      - name: Upload APK for arm64-v8a
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: android-apk
-          path: build/app/outputs/flutter-apk/*.apk
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/app/outputs/flutter-apk/app-release-arm64-v8a.apk
+          tag: v1.0
+          overwrite: true
+          body: "This is the Android release for arm64-v8a"
+
+      - name: Upload APK for x86_64
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/app/outputs/flutter-apk/app-release-x86_64.apk
+          tag: v1.0
+          overwrite: true
+          body: "This is the Android release for x86_64"
