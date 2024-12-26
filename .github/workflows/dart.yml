@@ -42,7 +42,7 @@ jobs:
 
   build-android:
     name: 📱 Android Build
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -53,43 +53,15 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          architecture: x64
+          flutter-version: '3.27.1'
 
       - run: flutter pub get
+      
+      - run: flutter build apk --release --split-per-abi
 
-      - name: Build APKs (split per ABI)
-        run: flutter build apk --release --split-per-abi
-
-      - name: Rename and organize APK files
-        run: |
-          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/app-release-armeabi-v7a.apk
-          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/app-release-arm64-v8a.apk
-          mv build/app/outputs/flutter-apk/app-x86_64-release.apk build/app/outputs/flutter-apk/app-release-x86_64.apk
-
-      - name: Upload APK for armeabi-v7a
-        uses: svenstaro/upload-release-action@v2
+      - name: Push to Realease
+        uses: ncipollo/release-action@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/app/outputs/flutter-apk/app-release-armeabi-v7a.apk
-          tag: v1.0
-          overwrite: true
-          body: "This is the Android release for armeabi-v7a"
-
-      - name: Upload APK for arm64-v8a
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/app/outputs/flutter-apk/app-release-arm64-v8a.apk
-          tag: v1.0
-          overwrite: true
-          body: "This is the Android release for arm64-v8a"
-
-      - name: Upload APK for x86_64
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/app/outputs/flutter-apk/app-release-x86_64.apk
-          tag: v1.0
-          overwrite: true
-          body: "This is the Android release for x86_64"
+          artifacts: "build/app/outputs/release/*"
+          tag: 1.0.${{ github.run_number }}
+          token: ${{ secrets.GITHUB_TOKEN }}
