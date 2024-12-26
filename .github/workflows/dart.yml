@@ -58,7 +58,7 @@ jobs:
       - name: Build iOS .ipa
         if: matrix.platform == 'ios'
         run: |
-          flutter build ipa --release
+          flutter build ipa --release --no-codesign
         working-directory: .
 
       - name: Build Android APKs
