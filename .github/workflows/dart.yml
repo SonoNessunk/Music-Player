@@ -43,6 +43,9 @@ jobs:
   build-android:
     name: 📱 Android Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architecture: [android-arm, android-arm64, android-x64]
     steps:
       - uses: actions/checkout@v3
 
@@ -58,44 +61,17 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Build APK for ARM
-        run: |
-          flutter build apk --release --target-platform=android-arm
-          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-release-android-arm.apk
+      - name: Build APK for each architecture
+        run: flutter build apk --release --target-platform=${{ matrix.architecture }}
 
-      - name: Build APK for ARM64
-        run: |
-          flutter build apk --release --target-platform=android-arm64
-          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-release-android-arm64.apk
+      - name: Save APK with unique name
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-release-${{ matrix.architecture }}.apk
 
-      - name: Build APK for x64
-        run: |
-          flutter build apk --release --target-platform=android-x64
-          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-release-android-x64.apk
-
-      - name: Upload APK for ARM
+      - name: Upload Android binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/app/outputs/flutter-apk/app-release-android-arm.apk
+          file: build/app/outputs/flutter-apk/app-release-${{ matrix.architecture }}.apk
           tag: v1.0
           overwrite: true
-          body: "This is the Android release for ARM"
-
-      - name: Upload APK for ARM64
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/app/outputs/flutter-apk/app-release-android-arm64.apk
-          tag: v1.0
-          overwrite: true
-          body: "This is the Android release for ARM64"
-
-      - name: Upload APK for x64
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/app/outputs/flutter-apk/app-release-android-x64.apk
-          tag: v1.0
-          overwrite: true
-          body: "This is the Android release for x64"
+          body: "This is the Android release for ${{ matrix.architecture }}"
