@@ -1,95 +1,96 @@
-name: iOS-Android-Build
+name: Flutter Build
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  FLUTTER_VERSION: "3.7.0"  # Imposta la versione di Flutter
 
 jobs:
   build-ios:
-    name: 🎉 iOS Build
+    name: Build iOS
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - uses: subosito/flutter-action@v2
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v3
         with:
-          channel: 'stable'
-          architecture: x64
-      - run: flutter pub get
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
 
-      - run: pod repo update
-        working-directory: ios
-
-      - run: flutter build ios --release --no-codesign
-
-      - run: mkdir Payload
-        working-directory: build/ios/iphoneos
-
-      - run: mv Runner.app/ Payload
-        working-directory: build/ios/iphoneos
-
-      - name: Create IPA file
-        run: zip -qq -r -9 FlutterIpaExport.ipa Payload
-        working-directory: build/ios/iphoneos
-
-      - name: Upload iOS binaries to release
-        uses: svenstaro/upload-release-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/ios/iphoneos/FlutterIpaExport.ipa
-          tag: v1.0
-          overwrite: true
-          body: "This is the iOS release"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Clean previous builds
+        run: flutter clean
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run lint check
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build iOS .ipa
+        run: |
+          flutter build ipa --release
+
+      - name: Upload artifact (iOS)
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-ipa
+          path: build/ios/ipa/*.ipa
 
   build-android:
-    name: 📱 Android Build
+    name: Build Android
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-java@v3
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v3
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          architecture: x64
+          flutter-version: ${{ env.FLUTTER_VERSION }}
 
-      - run: flutter pub get
+      - name: Clean previous builds
+        run: flutter clean
 
-      - name: Build APKs (split per ABI)
-        run: flutter build apk --release --split-per-abi
+      - name: Install dependencies
+        run: flutter pub get
 
-      - name: Rename and organize APK files
-        run: |
-          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/app-release-armeabi-v7a.apk
-          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/app-release-arm64-v8a.apk
-          mv build/app/outputs/flutter-apk/app-x86_64-release.apk build/app/outputs/flutter-apk/app-release-x86_64.apk
+      - name: Run lint check
+        run: flutter analyze
 
-      - name: Upload APK for armeabi-v7a
-        uses: svenstaro/upload-release-action@v2
+      - name: Run tests
+        run: flutter test
+
+      - name: Build Android APKs
+        run: flutter build apk --split-per-abi
+
+      - name: Upload artifact (Android)
+        uses: actions/upload-artifact@v3
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/app/outputs/flutter-apk/app-release-armeabi-v7a.apk
-          tag: v1.0
-          overwrite: true
-          body: "This is the Android release for armeabi-v7a"
-
-      - name: Upload APK for arm64-v8a
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/app/outputs/flutter-apk/app-release-arm64-v8a.apk
-          tag: v1.0
-          overwrite: true
-          body: "This is the Android release for arm64-v8a"
-
-      - name: Upload APK for x86_64
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/app/outputs/flutter-apk/app-release-x86_64.apk
-          tag: v1.0
-          overwrite: true
-          body: "This is the Android release for x86_64"
+          name: android-apk
+          path: build/app/outputs/flutter-apk/*.apk
